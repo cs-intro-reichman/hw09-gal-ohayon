@@ -29,22 +29,28 @@ public class LanguageModel {
 
     /** Builds a language model from the text in the given file (the corpus). */
     public void train(String fileName) {
+        String window = "";
+        char c;
         In in = new In(fileName);
-        String corpus = in.readAll();
-        
-        for (int i = 0; i <= corpus.length() - windowLength - 1; i++) {
-            String window = corpus.substring(i, i + windowLength);
-            char nextChar = corpus.charAt(i + windowLength);
-            
+
+        for (int i = 0; i < windowLength && !in.isEmpty(); i++) {
+            window += in.readChar();
+        }
+
+        while (!in.isEmpty()) {
+            c = in.readChar();
             List probs = CharDataMap.get(window);
+
             if (probs == null) {
                 probs = new List();
                 CharDataMap.put(window, probs);
             }
-            probs.update(nextChar);
+
+            probs.update(c);
+
+            window = window.substring(1) + c;
         }
 
-        // לאחר בניית המפה, מחשבים הסתברויות לכל רשימה
         for (List probs : CharDataMap.values()) {
             calculateProbabilities(probs);
         }
@@ -53,12 +59,10 @@ public class LanguageModel {
     // Computes and sets the probabilities (p and cp fields) of all the characters.
     void calculateProbabilities(List probs) {
         int totalCounts = 0;
-        // שלב א: ספירת סך כל המופעים ברשימה
         for (int i = 0; i < probs.getSize(); i++) {
             totalCounts += probs.get(i).count;
         }
 
-        // שלב ב: חישוב p ו-cp (הסתברות מצטברת)
         double cumulativeProb = 0;
         for (int i = 0; i < probs.getSize(); i++) {
             CharData cd = probs.get(i);
@@ -77,7 +81,7 @@ public class LanguageModel {
                 return cd.chr;
             }
         }
-        return probs.get(probs.getSize() - 1).chr; // Fallback
+        return probs.get(probs.getSize() - 1).chr;
     }
 
     /** Generates a random text, based on the learned probabilities. */
@@ -89,17 +93,15 @@ public class LanguageModel {
         StringBuilder generatedText = new StringBuilder(initialText);
         String currentWindow = initialText.substring(initialText.length() - windowLength);
 
-        while (generatedText.length() < textLength + initialText.length()) {
+        while (generatedText.length() < textLength) {
             List probs = CharDataMap.get(currentWindow);
             
             if (probs == null) {
-                break; // אם החלון לא קיים במודל, עוצרים
+                break;
             }
             
             char nextChar = getRandomChar(probs);
             generatedText.append(nextChar);
-            
-            // עדכון החלון: לוקחים את סוף המחרוזת הנוכחית
             currentWindow = generatedText.substring(generatedText.length() - windowLength);
         }
 
@@ -116,14 +118,19 @@ public class LanguageModel {
     }
 
     public static void main(String[] args) {
-        // דוגמה להרצה:
-        int windowLen = Integer.parseInt(args[0]);
-        String seedText = args[1];
-        int genLength = Integer.parseInt(args[2]);
-        String fileName = args[3];
+        int windowLength = Integer.parseInt(args[0]);
+        String initialText = args[1];
+        int generatedTextLength = Integer.parseInt(args[2]);
+        Boolean randomGeneration = args[3].equals("random");
+        String fileName = args[4];
 
-        LanguageModel lm = new LanguageModel(windowLen);
+        LanguageModel lm;
+        if (randomGeneration)
+            lm = new LanguageModel(windowLength);
+        else
+            lm = new LanguageModel(windowLength, 20);
+
         lm.train(fileName);
-        System.out.println(lm.generate(seedText, genLength));
+        System.out.println(lm.generate(initialText, generatedTextLength));
     }
 }

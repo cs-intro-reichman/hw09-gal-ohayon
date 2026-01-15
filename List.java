@@ -59,7 +59,7 @@ public class List {
         Node current = first;
         int index = 0;
         while (current != null) {
-            if (current.cp.equals(chr)) {
+            if (current.cp.chr == chr) {
                 return index;
             }
             current = current.next;
@@ -87,7 +87,7 @@ public class List {
         Node prev = null;
         Node current = first;
         while (current != null) {
-            if (current.cp.equals(chr)) {
+            if (current.cp.chr == chr) {
                 if (prev == null) { 
                     first = first.next;
                 } else { 
@@ -130,7 +130,9 @@ public class List {
 
     /** Returns an iterator over the elements in this list, starting at the given index. */
     public ListIterator listIterator(int index) {
-        if (size == 0) return null;
+        if (index < 0 || index > size) {
+            throw new IndexOutOfBoundsException();
+        }
         Node current = first;
         int i = 0;
         while (i < index) {
