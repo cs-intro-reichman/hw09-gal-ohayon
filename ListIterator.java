@@ -2,12 +2,11 @@
 public class ListIterator {
 
     // Current position in the list (cursor)
-    Node current;
+    private Node current;
 
     /** Constructs a list iterator, starting at the given node. */
     public ListIterator(Node node) {
-        // Sets the cursor of this iterator to the given node
-        current = node;
+        this.current = node;
     }
 
     /** Checks if this iterator has more nodes to process */
@@ -16,9 +15,12 @@ public class ListIterator {
     }
   
     /** Returns the CharData object of the current element in this iteration,
-     *  and advances the cursor to the next element.
-     *  Should be called only if hasNext() is true. */
+     * and advances the cursor to the next element.
+     * Should be called only if hasNext() is true. */
     public CharData next() {
+        if (!hasNext()) {
+            return null;
+        }
         CharData cd = current.cp;
         current = current.next;
         return cd;
