@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -6,19 +7,26 @@ public class LanguageModel {
     int windowLength;
     private Random randomGenerator;
 
+    private ArrayList<String> keysInOrder;
+
     public LanguageModel(int windowLength, int seed) {
         this.windowLength = windowLength;
         randomGenerator = new Random(seed);
         CharDataMap = new HashMap<String, List>();
+        keysInOrder = new ArrayList<String>();
     }
 
     public LanguageModel(int windowLength) {
         this.windowLength = windowLength;
         randomGenerator = new Random();
         CharDataMap = new HashMap<String, List>();
+        keysInOrder = new ArrayList<String>();
     }
 
     public void train(String fileName) {
+        CharDataMap.clear();
+        keysInOrder.clear();
+
         In in = new In(fileName);
         String corpus = in.readAll();
 
@@ -30,6 +38,7 @@ public class LanguageModel {
             if (probs == null) {
                 probs = new List();
                 CharDataMap.put(window, probs);
+                keysInOrder.add(window);
             }
             probs.update(nextChar);
         }
@@ -81,7 +90,8 @@ public class LanguageModel {
     public String toString() {
         StringBuilder out = new StringBuilder();
 
-        for (String key : CharDataMap.keySet()) {
+        for (int k = 0; k < keysInOrder.size(); k++) {
+            String key = keysInOrder.get(k);
             out.append(key).append(" : ((");
 
             List probs = CharDataMap.get(key);
