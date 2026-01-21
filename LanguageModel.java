@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -21,31 +19,22 @@ public class LanguageModel {
     }
 
     public void train(String fileName) {
-        String window = "";
-        char c;
         In in = new In(fileName);
+        String corpus = in.readAll();
 
-        while (window.length() < windowLength && !in.isEmpty()) {
-            window = window + in.readChar();
-        }
-        if (window.length() < windowLength) return;
-
-        while (!in.isEmpty()) {
-            c = in.readChar();
+        for (int i = 0; i <= corpus.length() - windowLength - 1; i++) {
+            String window = corpus.substring(i, i + windowLength);
+            char nextChar = corpus.charAt(i + windowLength);
 
             List probs = CharDataMap.get(window);
             if (probs == null) {
                 probs = new List();
                 CharDataMap.put(window, probs);
             }
-
-            probs.update(c);
-
-            window = window.substring(1) + c;
+            probs.update(nextChar);
         }
 
-        for (List probs : CharDataMap.values())
-            calculateProbabilities(probs);
+        for (List probs : CharDataMap.values()) calculateProbabilities(probs);
     }
 
     void calculateProbabilities(List probs) {
@@ -74,11 +63,11 @@ public class LanguageModel {
 
     public String generate(String initialText, int textLength) {
         if (initialText.length() < windowLength) return initialText;
-        if (initialText.length() >= textLength) return initialText.substring(0, textLength);
 
         StringBuilder sb = new StringBuilder(initialText);
+        int targetLength = initialText.length() + textLength;
 
-        while (sb.length() < textLength) {
+        while (sb.length() < targetLength) {
             String window = sb.substring(sb.length() - windowLength);
             List probs = CharDataMap.get(window);
             if (probs == null) break;
@@ -90,13 +79,20 @@ public class LanguageModel {
     }
 
     public String toString() {
-        ArrayList<String> keys = new ArrayList<>(CharDataMap.keySet());
-        Collections.sort(keys);
-
         StringBuilder sb = new StringBuilder();
-        for (String key : keys) {
-            sb.append(key).append(" : ").append(CharDataMap.get(key).toString()).append("\n");
+
+        for (String key : CharDataMap.keySet()) {
+            sb.append(key).append(" : ((");
+
+            List probs = CharDataMap.get(key);
+            for (int i = 0; i < probs.getSize(); i++) {
+                sb.append(probs.get(i).toString());
+                if (i < probs.getSize() - 1) sb.append("\n");
+            }
+
+            sb.append("))\n");
         }
+
         return sb.toString();
     }
 }
