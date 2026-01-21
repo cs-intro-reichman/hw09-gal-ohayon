@@ -79,20 +79,24 @@ public class LanguageModel {
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder out = new StringBuilder();
 
         for (String key : CharDataMap.keySet()) {
-            sb.append(key).append(" : ((");
+            out.append(key).append(" : ((");
 
             List probs = CharDataMap.get(key);
             for (int i = 0; i < probs.getSize(); i++) {
-                sb.append(probs.get(i).toString());
-                if (i < probs.getSize() - 1) sb.append("\n");
+                String s = probs.get(i).toString();
+                if (s.length() >= 2 && s.charAt(0) == '(' && s.charAt(s.length() - 1) == ')') {
+                    s = s.substring(1, s.length() - 1);
+                }
+                out.append(s);
+                if (i < probs.getSize() - 1) out.append("\n");
             }
 
-            sb.append("))\n");
+            out.append("))\n");
         }
 
-        return sb.toString();
+        return out.toString();
     }
 }
