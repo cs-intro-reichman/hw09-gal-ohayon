@@ -19,31 +19,22 @@ public class LanguageModel {
     }
 
     public void train(String fileName) {
-        String window = "";
-        char c;
         In in = new In(fileName);
+        String corpus = in.readAll();
 
-        while (window.length() < windowLength && !in.isEmpty()) {
-            window = window + in.readChar();
-        }
-        if (window.length() < windowLength) return;
-
-        while (!in.isEmpty()) {
-            c = in.readChar();
+        for (int i = 0; i <= corpus.length() - windowLength - 1; i++) {
+            String window = corpus.substring(i, i + windowLength);
+            char nextChar = corpus.charAt(i + windowLength);
 
             List probs = CharDataMap.get(window);
             if (probs == null) {
                 probs = new List();
                 CharDataMap.put(window, probs);
             }
-
-            probs.update(c);
-
-            window = window.substring(1) + c;
+            probs.update(nextChar);
         }
 
-        for (List probs : CharDataMap.values())
-            calculateProbabilities(probs);
+        for (List probs : CharDataMap.values()) calculateProbabilities(probs);
     }
 
     void calculateProbabilities(List probs) {
@@ -97,15 +88,23 @@ public class LanguageModel {
 
             List probs = CharDataMap.get(key);
             for (int i = 0; i < probs.getSize(); i++) {
-                String s = probs.get(i).toString(); // "(x count p cp)"
-                if (s.length() >= 2 && s.charAt(0) == '(' && s.charAt(s.length() - 1) == ')') {
-                    s = s.substring(1, s.length() - 1); // "x count p cp"
+                CharData cd = probs.get(i);
+
+                if (i == 0) {
+                    out.append(cd.chr).append(" ")
+                       .append(cd.count).append(" ")
+                       .append(cd.p).append(" ")
+                       .append(cd.cp).append(")");
+                } else {
+                    out.append("\n(")
+                       .append(cd.chr).append(" ")
+                       .append(cd.count).append(" ")
+                       .append(cd.p).append(" ")
+                       .append(cd.cp).append(")");
                 }
-                out.append(s);
-                if (i < probs.getSize() - 1) out.append("\n");
             }
 
-            out.append("))\n");
+            out.append(")\n");
         }
 
         return out.toString();
