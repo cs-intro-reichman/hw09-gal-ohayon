@@ -17,17 +17,6 @@ public class List {
         return first.cp;
     }
 
-    public int indexOf(char chr) {
-        Node current = first;
-        int index = 0;
-        while (current != null) {
-            if (current.cp.chr == chr) return index;
-            current = current.next;
-            index++;
-        }
-        return -1;
-    }
-
     public void addFirst(char chr) {
         CharData cd = new CharData(chr);
         Node newNode = new Node(cd, first);
@@ -46,6 +35,17 @@ public class List {
         }
         sb.append(")");
         return sb.toString();
+    }
+
+    public int indexOf(char chr) {
+        Node current = first;
+        int index = 0;
+        while (current != null) {
+            if (current.cp.chr == chr) return index;
+            current = current.next;
+            index++;
+        }
+        return -1;
     }
 
     public boolean remove(char chr) {
