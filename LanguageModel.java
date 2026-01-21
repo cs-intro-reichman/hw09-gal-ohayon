@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -19,24 +21,38 @@ public class LanguageModel {
     }
 
     public void train(String fileName) {
+        String window = "";
+        char c;
         In in = new In(fileName);
-        String corpus = in.readAll();
-        for (int i = 0; i <= corpus.length() - windowLength - 1; i++) {
-            String window = corpus.substring(i, i + windowLength);
-            char nextChar = corpus.charAt(i + windowLength);
+
+        while (window.length() < windowLength && !in.isEmpty()) {
+            window = window + in.readChar();
+        }
+        if (window.length() < windowLength) return;
+
+        while (!in.isEmpty()) {
+            c = in.readChar();
+
             List probs = CharDataMap.get(window);
             if (probs == null) {
                 probs = new List();
                 CharDataMap.put(window, probs);
             }
-            probs.update(nextChar);
+
+            probs.update(c);
+
+            window = window.substring(1) + c;
         }
-        for (List probs : CharDataMap.values()) calculateProbabilities(probs);
+
+        for (List probs : CharDataMap.values())
+            calculateProbabilities(probs);
     }
 
     void calculateProbabilities(List probs) {
         int totalCounts = 0;
-        for (int i = 0; i < probs.getSize(); i++) totalCounts += probs.get(i).count;
+        for (int i = 0; i < probs.getSize(); i++)
+            totalCounts += probs.get(i).count;
+
         double cumulativeProb = 0;
         for (int i = 0; i < probs.getSize(); i++) {
             CharData cd = probs.get(i);
@@ -44,27 +60,42 @@ public class LanguageModel {
             cumulativeProb += cd.p;
             cd.cp = cumulativeProb;
         }
+        if (probs.getSize() > 0) probs.get(probs.getSize() - 1).cp = 1.0;
     }
 
     char getRandomChar(List probs) {
         double r = randomGenerator.nextDouble();
         for (int i = 0; i < probs.getSize(); i++) {
             CharData cd = probs.get(i);
-            if (cd.cp >= r) return cd.chr;
+            if (r < cd.cp) return cd.chr;
         }
         return probs.get(probs.getSize() - 1).chr;
     }
 
     public String generate(String initialText, int textLength) {
         if (initialText.length() < windowLength) return initialText;
+        if (initialText.length() >= textLength) return initialText.substring(0, textLength);
+
         StringBuilder sb = new StringBuilder(initialText);
-        String window = initialText.substring(initialText.length() - windowLength);
-        while (sb.length() < textLength + initialText.length()) {
+
+        while (sb.length() < textLength) {
+            String window = sb.substring(sb.length() - windowLength);
             List probs = CharDataMap.get(window);
             if (probs == null) break;
             char nextChar = getRandomChar(probs);
             sb.append(nextChar);
-            window = sb.substring(sb.length() - windowLength);
+        }
+
+        return sb.toString();
+    }
+
+    public String toString() {
+        ArrayList<String> keys = new ArrayList<>(CharDataMap.keySet());
+        Collections.sort(keys);
+
+        StringBuilder sb = new StringBuilder();
+        for (String key : keys) {
+            sb.append(key).append(" : ").append(CharDataMap.get(key).toString()).append("\n");
         }
         return sb.toString();
     }

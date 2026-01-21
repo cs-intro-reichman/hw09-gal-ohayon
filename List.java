@@ -2,17 +2,30 @@
 public class List {
     private Node first;
     private int size;
-    
+
     public List() {
         first = null;
         size = 0;
     }
-    
-    public int getSize() { return size; }
+
+    public int getSize() {
+        return size;
+    }
 
     public CharData getFirst() {
         if (first == null) return null;
         return first.cp;
+    }
+
+    public int indexOf(char chr) {
+        Node current = first;
+        int index = 0;
+        while (current != null) {
+            if (current.cp.chr == chr) return index;
+            current = current.next;
+            index++;
+        }
+        return -1;
     }
 
     public void addFirst(char chr) {
@@ -21,7 +34,7 @@ public class List {
         first = newNode;
         size++;
     }
-    
+
     public String toString() {
         if (size == 0) return "()";
         StringBuilder sb = new StringBuilder("(");
@@ -35,31 +48,11 @@ public class List {
         return sb.toString();
     }
 
-    public int indexOf(char chr) {
-        Node current = first;
-        int index = 0;
-        while (current != null) {
-            if (current.cp.equals(chr)) return index;
-            current = current.next;
-            index++;
-        }
-        return -1;
-    }
-
-    public void update(char chr) {
-        int index = indexOf(chr);
-        if (index != -1) {
-            get(index).count++;
-        } else {
-            addFirst(chr);
-        }
-    }
-
     public boolean remove(char chr) {
         Node prev = null;
         Node current = first;
         while (current != null) {
-            if (current.cp.equals(chr)) {
+            if (current.cp.chr == chr) {
                 if (prev == null) first = first.next;
                 else prev.next = current.next;
                 size--;
@@ -78,19 +71,8 @@ public class List {
         return current.cp;
     }
 
-    public CharData[] toArray() {
-        CharData[] arr = new CharData[size];
-        Node current = first;
-        int i = 0;
-        while (current != null) {
-            arr[i++] = current.cp;
-            current = current.next;
-        }
-        return arr;
-    }
-
     public ListIterator listIterator(int index) {
-        if (size == 0) return null;
+        if (index < 0 || index > size) throw new IndexOutOfBoundsException();
         Node current = first;
         int i = 0;
         while (i < index && current != null) {
@@ -98,5 +80,14 @@ public class List {
             i++;
         }
         return new ListIterator(current);
+    }
+
+    public void update(char chr) {
+        int index = indexOf(chr);
+        if (index != -1) {
+            get(index).count++;
+        } else {
+            addFirst(chr);
+        }
     }
 }
