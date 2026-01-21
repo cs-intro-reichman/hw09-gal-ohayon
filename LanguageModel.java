@@ -1,4 +1,3 @@
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -7,43 +6,44 @@ public class LanguageModel {
     int windowLength;
     private Random randomGenerator;
 
-    private ArrayList<String> keysInOrder;
-
     public LanguageModel(int windowLength, int seed) {
         this.windowLength = windowLength;
         randomGenerator = new Random(seed);
         CharDataMap = new HashMap<String, List>();
-        keysInOrder = new ArrayList<String>();
     }
 
     public LanguageModel(int windowLength) {
         this.windowLength = windowLength;
         randomGenerator = new Random();
         CharDataMap = new HashMap<String, List>();
-        keysInOrder = new ArrayList<String>();
     }
 
     public void train(String fileName) {
-        CharDataMap.clear();
-        keysInOrder.clear();
-
+        String window = "";
+        char c;
         In in = new In(fileName);
-        String corpus = in.readAll();
 
-        for (int i = 0; i <= corpus.length() - windowLength - 1; i++) {
-            String window = corpus.substring(i, i + windowLength);
-            char nextChar = corpus.charAt(i + windowLength);
+        while (window.length() < windowLength && !in.isEmpty()) {
+            window = window + in.readChar();
+        }
+        if (window.length() < windowLength) return;
+
+        while (!in.isEmpty()) {
+            c = in.readChar();
 
             List probs = CharDataMap.get(window);
             if (probs == null) {
                 probs = new List();
                 CharDataMap.put(window, probs);
-                keysInOrder.add(window);
             }
-            probs.update(nextChar);
+
+            probs.update(c);
+
+            window = window.substring(1) + c;
         }
 
-        for (List probs : CharDataMap.values()) calculateProbabilities(probs);
+        for (List probs : CharDataMap.values())
+            calculateProbabilities(probs);
     }
 
     void calculateProbabilities(List probs) {
@@ -58,7 +58,9 @@ public class LanguageModel {
             cumulativeProb += cd.p;
             cd.cp = cumulativeProb;
         }
-        if (probs.getSize() > 0) probs.get(probs.getSize() - 1).cp = 1.0;
+
+        if (probs.getSize() > 0)
+            probs.get(probs.getSize() - 1).cp = 1.0;
     }
 
     char getRandomChar(List probs) {
@@ -90,15 +92,14 @@ public class LanguageModel {
     public String toString() {
         StringBuilder out = new StringBuilder();
 
-        for (int k = 0; k < keysInOrder.size(); k++) {
-            String key = keysInOrder.get(k);
+        for (String key : CharDataMap.keySet()) {
             out.append(key).append(" : ((");
 
             List probs = CharDataMap.get(key);
             for (int i = 0; i < probs.getSize(); i++) {
-                String s = probs.get(i).toString();
+                String s = probs.get(i).toString(); // "(x count p cp)"
                 if (s.length() >= 2 && s.charAt(0) == '(' && s.charAt(s.length() - 1) == ')') {
-                    s = s.substring(1, s.length() - 1);
+                    s = s.substring(1, s.length() - 1); // "x count p cp"
                 }
                 out.append(s);
                 if (i < probs.getSize() - 1) out.append("\n");
